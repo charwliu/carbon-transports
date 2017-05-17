@@ -33,9 +33,9 @@
     </modules>
 
     <scm>
-        <url>https://github.com/wso2/carbon-transports.git</url>
-        <developerConnection>scm:git:https://github.com/wso2/carbon-transports.git</developerConnection>
-        <connection>scm:git:https://github.com/wso2/carbon-transports.git</connection>
+        <url>https://github.com/charwliu/carbon-transports.git</url>
+        <developerConnection>scm:git:https://github.com/charwliu/carbon-transports.git</developerConnection>
+        <connection>scm:git:https://github.com/charwliu/carbon-transports.git</connection>
         <tag>HEAD</tag>
     </scm>
 
@@ -215,7 +215,7 @@
         <carbon.messaging.version>1.0.0-SNAPSHOT</carbon.messaging.version>
         <carbon.messaging.package.import.version.range>[0.0.0, 2.0.0)</carbon.messaging.package.import.version.range>
 
-        <slf4j.version>1.7.5</slf4j.version>
+        <slf4j.version>1.7.13</slf4j.version>
         <!--Logging API version range-->
         <slf4j.logging.package.import.version.range>[1.7.1, 2.0.0)</slf4j.logging.package.import.version.range>
 
