@@ -28,8 +28,11 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.carbon.messaging.BinaryCarbonMessage;
 import org.wso2.carbon.messaging.CarbonMessage;
 import org.wso2.carbon.messaging.DefaultCarbonMessage;
+import org.wso2.carbon.messaging.TextCarbonMessage;
+import org.wso2.carbon.messaging.exceptions.ClientConnectorException;
 import org.wso2.carbon.transport.http.netty.common.HttpRoute;
 import org.wso2.carbon.transport.http.netty.config.SenderConfiguration;
 import org.wso2.carbon.transport.http.netty.internal.HTTPTransportContextHolder;
@@ -39,8 +42,6 @@ import org.wso2.carbon.transport.http.netty.sender.HTTPClientInitializer;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Utility class for Channel handling.
@@ -100,21 +101,9 @@ public class ChannelUtils {
                     bootstrapConfiguration.getConnectTimeOut());
         }
 
-        // here we need to wait it in other thread
-        final CountDownLatch channelLatch = new CountDownLatch(1);
-        channelFuture.addListener(cf -> channelLatch.countDown());
-
-        try {
-            boolean wait = channelLatch.await(bootstrapConfiguration.getConnectTimeOut(), TimeUnit.MILLISECONDS);
-            if (wait) {
-                log.debug("Waited for connection creation in Sender");
-            }
-        } catch (InterruptedException ex) {
-            throw new Exception("Interrupted while waiting for " + "connection to " + httpRoute.toString());
-        }
-
+        // this wait is okay as we have a timeout in connect method
+        channelFuture.awaitUninterruptibly();
         Channel channel = null;
-
         if (channelFuture.isDone() && channelFuture.isSuccess()) {
             channel = channelFuture.channel();
             if (log.isDebugEnabled()) {
@@ -147,7 +136,8 @@ public class ChannelUtils {
      * @param carbonMessage Carbon Message
      * @return
      */
-    public static boolean writeContent(Channel channel, HttpRequest httpRequest, CarbonMessage carbonMessage) {
+    public static boolean writeContent(Channel channel, HttpRequest httpRequest, CarbonMessage carbonMessage)
+                                                                                        throws Exception {
         if (HTTPTransportContextHolder.getInstance().getHandlerExecutor() != null) {
             HTTPTransportContextHolder.getInstance().getHandlerExecutor().
                     executeAtTargetRequestReceiving(carbonMessage);
@@ -175,18 +165,18 @@ public class ChannelUtils {
                 }
 
             }
-        } else if (carbonMessage instanceof DefaultCarbonMessage) {
-            DefaultCarbonMessage defaultCMsg = (DefaultCarbonMessage) carbonMessage;
-            if (defaultCMsg.isEndOfMsgAdded() && defaultCMsg.isEmpty()) {
+        } else if (carbonMessage instanceof DefaultCarbonMessage || carbonMessage instanceof TextCarbonMessage
+                || carbonMessage instanceof BinaryCarbonMessage) {
+            if (carbonMessage.isEndOfMsgAdded() && carbonMessage.isEmpty()) {
                 channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
                 return true;
             }
             while (true) {
-                ByteBuffer byteBuffer = defaultCMsg.getMessageBody();
+                ByteBuffer byteBuffer = carbonMessage.getMessageBody();
                 ByteBuf bbuf = Unpooled.wrappedBuffer(byteBuffer);
                 DefaultHttpContent httpContent = new DefaultHttpContent(bbuf);
                 channel.write(httpContent);
-                if (defaultCMsg.isEndOfMsgAdded() && defaultCMsg.isEmpty()) {
+                if (carbonMessage.isEndOfMsgAdded() && carbonMessage.isEmpty()) {
                     channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
                     if (HTTPTransportContextHolder.getInstance().getHandlerExecutor() != null) {
                         HTTPTransportContextHolder.getInstance().getHandlerExecutor().
@@ -195,6 +185,8 @@ public class ChannelUtils {
                     break;
                 }
             }
+        } else {
+            throw new ClientConnectorException("Unsupported message type");
         }
 
         return true;

@@ -143,6 +143,7 @@ public class ServerConnectorController {
     }
 
     public void stop() {
+        handler.getConnectionManager().getTargetChannelPool().clear();
         shutdownEventLoops();
     }
 
@@ -245,4 +246,7 @@ public class ServerConnectorController {
         return false;
     }
 
+    public TransportsConfiguration getTransportsConfiguration() {
+        return transportsConfiguration;
+    }
 }

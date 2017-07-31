@@ -96,6 +96,8 @@ public final class Constants {
 
     public static final String MAX_IDLE_CONNECTIONS_PER_POOL = "cleint.max.idle.connections.per.pool";
 
+    public static final String MAX_WAIT_FOR_CLIENT_CONNECTION_POOL = "max.wait.for.client.connection.pool";
+
     public static final String MIN_EVICTION_IDLE_TIME = "client.min.eviction.idle.time";
 
     public static final String ENABLE_GLOBAL_CONNECTION_POOLING = "enable.global.client.connection.pooling";
@@ -169,7 +171,14 @@ public final class Constants {
 
     public static final String ACCEPT_ENCODING = "Accept-Encoding";
 
-    public static final String HTTP_HOST = "Host";
+    //HTTP server connector creation parameters
+    public static final String HTTP_HOST = "host";
+    public static final String HTTP_PORT = "port";
+    public static final String HTTP_SCHEME = "scheme";
+    public static final String HTTP_KEY_STORE_FILE = "keyStoreFile";
+    public static final String HTTP_KEY_STORE_PASS = "keyStorePass";
+    public static final String HTTP_CERT_PASS = "certPass";
+    public static final String HTTP_DEFAULT_HOST = "0.0.0.0";
 
     public static final String TRANSPORT_HEADERS = "TRANSPORT_HEADERS";
 
@@ -178,6 +187,8 @@ public final class Constants {
     public static final String HTTP_REASON_PHRASE = "HTTP_REASON_PHRASE";
 
     public static final String CHNL_HNDLR_CTX = "CHNL_HNDLR_CTX";
+
+    public static final String MESSAGE_PROCESSOR_ID = "MESSAGE_PROCESSOR_ID";
 
     public static final String SRC_HANDLER = "SRC_HANDLER";
 
@@ -201,9 +212,18 @@ public final class Constants {
     public static final String CONNECTION = "Connection";
     public static final String UPGRADE = "Upgrade";
 
-    public static final String WEBSOCKET_SESSION = "WEBSOCKET_SESSION";
+    public static final String WEBSOCKET_SERVER_SESSION = "WEBSOCKET_SERVER_SESSION";
+    public static final String WEBSOCKET_CLIENT_SESSION = "WEBSOCKET_CLIENT_SESSION";
+    public static final String WEBSOCKET_CLIENT_SESSIONS_LIST = "WEBSOCKET_CLIENT_SESSIONS_LIST";
     public static final String WEBSOCKET_PROTOCOL = "ws";
     public static final String WEBSOCKET_UPGRADE = "websocket";
+    public static final String WEBSOCKET_CLIENT_ID = "WEBSOCKET_CLIENT_ID";
+    public static final String IS_WEBSOCKET_SERVER = "IS_WEBSOCKET_SERVER";
+    public static final String WEBSOCKET_SUBPROTOCOLS = "WEBSOCKET_SUBPROTOCOLS";
+    public static final String WEBSOCKET_ALLOW_EXTENSIONS = "WEBSOCKET_ALLOW_EXTENSIONS";
+    public static final String WEBSOCKET_CLOSE_CODE = "WEBSOCKET_CLOSE_CODE";
+    public static final String WEBSOCKET_CLOSE_REASON = "WEBSOCKET_CLOSE_REASON";
+    public static final String WEBSOCKET_TARGET = "WEBSOCKET_TARGET";
 
 
     // Callback related parameters

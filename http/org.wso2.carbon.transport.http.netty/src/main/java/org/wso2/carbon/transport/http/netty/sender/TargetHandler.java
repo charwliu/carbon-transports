@@ -17,11 +17,11 @@ package org.wso2.carbon.transport.http.netty.sender;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
-import io.netty.handler.timeout.ReadTimeoutHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.messaging.CarbonCallback;
@@ -36,7 +36,6 @@ import org.wso2.carbon.transport.http.netty.message.HTTPCarbonMessage;
 import org.wso2.carbon.transport.http.netty.sender.channel.TargetChannel;
 import org.wso2.carbon.transport.http.netty.sender.channel.pool.ConnectionManager;
 
-import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +48,7 @@ import java.util.Map;
  * causes timeout issues when TargetHandler is re-used from the ConnectionManager.
  *
  */
-public class TargetHandler extends ReadTimeoutHandler {
+public class TargetHandler extends ChannelInboundHandlerAdapter {
     protected static final Logger LOG = LoggerFactory.getLogger(TargetHandler.class);
 
     protected CarbonCallback callback;
@@ -58,8 +57,7 @@ public class TargetHandler extends ReadTimeoutHandler {
     protected TargetChannel targetChannel;
     protected CarbonMessage incomingMsg;
 
-    public TargetHandler(int timeoutSeconds) {
-        super(timeoutSeconds);
+    public TargetHandler() {
     }
 
     @Override
@@ -83,10 +81,11 @@ public class TargetHandler extends ReadTimeoutHandler {
                         executeAtTargetResponseReceiving(cMsg);
             }
             CarbonMessageProcessor carbonMessageProcessor = HTTPTransportContextHolder.getInstance()
-                    .getMessageProcessor();
+                    .getMessageProcessor((String) incomingMsg.getProperty(Constants.MESSAGE_PROCESSOR_ID));
             if (carbonMessageProcessor != null) {
                 try {
-                    HTTPTransportContextHolder.getInstance().getMessageProcessor().receive(cMsg, callback);
+                    HTTPTransportContextHolder.getInstance().getMessageProcessor((String) incomingMsg
+                            .getProperty(Constants.MESSAGE_PROCESSOR_ID)).receive(cMsg, callback);
                 } catch (Exception e) {
                     LOG.error("Error while handover response to MessageProcessor ", e);
                 }
@@ -117,6 +116,8 @@ public class TargetHandler extends ReadTimeoutHandler {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         ctx.close();
+        connectionManager.invalidateTargetChannel(targetChannel);
+
         if (HTTPTransportContextHolder.getInstance().getHandlerExecutor() != null) {
             HTTPTransportContextHolder.getInstance().getHandlerExecutor()
                     .executeAtTargetConnectionTermination(Integer.toString(ctx.hashCode()));
@@ -140,7 +141,7 @@ public class TargetHandler extends ReadTimeoutHandler {
         this.targetChannel = targetChannel;
     }
 
-    @Override
+    // TODO: This cannot be done as long as we use apache pooling.
     protected void readTimedOut(ChannelHandlerContext ctx) {
 
         ctx.channel().close();
@@ -150,11 +151,12 @@ public class TargetHandler extends ReadTimeoutHandler {
                     getHttpRoute().toString() + "</errorMessage>";
 
             CarbonMessageProcessor carbonMessageProcessor = HTTPTransportContextHolder.getInstance()
-                    .getMessageProcessor();
+                    .getMessageProcessor((String) incomingMsg.getProperty(Constants.MESSAGE_PROCESSOR_ID));
 
             if (carbonMessageProcessor != null) {
                 try {
-                    HTTPTransportContextHolder.getInstance().getMessageProcessor()
+                    HTTPTransportContextHolder.getInstance().getMessageProcessor((String) incomingMsg
+                            .getProperty(Constants.MESSAGE_PROCESSOR_ID))
                             .receive(createErrorMessage(payload), callback);
                 } catch (Exception e) {
                     LOG.error("Error while handover response to MessageProcessor ", e);
@@ -171,8 +173,7 @@ public class TargetHandler extends ReadTimeoutHandler {
         if (HTTPTransportContextHolder.getInstance().getHandlerExecutor() != null) {
             HTTPTransportContextHolder.getInstance().getHandlerExecutor().executeAtTargetResponseReceiving(cMsg);
         }
-        cMsg.setProperty(Constants.PORT, ((InetSocketAddress) ctx.channel().remoteAddress()).getPort());
-        cMsg.setProperty(Constants.HOST, ((InetSocketAddress) ctx.channel().remoteAddress()).getHostName());
+
         cMsg.setProperty(org.wso2.carbon.messaging.Constants.DIRECTION,
                 org.wso2.carbon.messaging.Constants.DIRECTION_RESPONSE);
         cMsg.setProperty(org.wso2.carbon.messaging.Constants.CALL_BACK, callback);

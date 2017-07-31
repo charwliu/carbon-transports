@@ -28,6 +28,7 @@ import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.AsciiString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ import org.wso2.carbon.transport.http.netty.sender.channel.pool.ConnectionManage
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A class that responsible for create server side channels.
@@ -180,6 +182,10 @@ public class HTTPServerChannelInitializer extends ChannelInitializer<SocketChann
         p.addLast("compressor", new HttpContentCompressor());
         p.addLast("chunkWriter", new ChunkedWriteHandler());
         try {
+            int socketIdleTimeout = listenerConfiguration.getSocketIdleTimeout(60000);
+            p.addLast("idleStateHandler",
+                    new IdleStateHandler(socketIdleTimeout, socketIdleTimeout, socketIdleTimeout,
+                            TimeUnit.MILLISECONDS));
             p.addLast("handler", new SourceHandler(connectionManager, listenerConfiguration));
         } catch (Exception e) {
             log.error("Cannot Create SourceHandler ", e);
@@ -191,4 +197,7 @@ public class HTTPServerChannelInitializer extends ChannelInitializer<SocketChann
         return true;
     }
 
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
 }

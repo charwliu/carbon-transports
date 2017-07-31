@@ -20,7 +20,11 @@
     <parent>
         <artifactId>org.wso2.carbon.transport.file.feature.parent</artifactId>
         <groupId>org.wso2.carbon.transport</groupId>
+<<<<<<< HEAD
         <version>4.4.2-SNAPSHOT</version>
+=======
+        <version>4.4.24-SNAPSHOT</version>
+>>>>>>> upstream/master
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>

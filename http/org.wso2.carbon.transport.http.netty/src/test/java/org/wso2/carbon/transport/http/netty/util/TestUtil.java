@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 import static org.testng.AssertJUnit.fail;
 
 /**
- * A util class to be used for tests
+ * A util class to be used for tests.
  */
 public class TestUtil {
 
@@ -184,6 +184,7 @@ public class TestUtil {
 
     public static void writeContent(HttpURLConnection urlConn, String content) throws IOException {
         urlConn.getOutputStream().write(content.getBytes(Charsets.UTF_8));
+        urlConn.getOutputStream().flush();
     }
 
     public static HttpURLConnection request(URI baseURI, String path, String method, boolean keepAlive)
@@ -204,14 +205,14 @@ public class TestUtil {
     public static void setHeader(HttpURLConnection urlConnection, String key, String value) {
         urlConnection.setRequestProperty(key, value);
     }
-
+    public static void removeMessageProcessor(CarbonMessageProcessor carbonMessageProcessor) {
+        HTTPTransportContextHolder.getInstance().removeMessageProcessor(carbonMessageProcessor);
+    }
     public static void updateMessageProcessor(CarbonMessageProcessor carbonMessageProcessor,
             TransportsConfiguration transportsConfiguration) {
-
         HTTPClientConnector httpClientConnector =
                 new HTTPClientConnector(transportsConfiguration.getSenderConfigurations(),
                         transportsConfiguration.getTransportProperties());
-
         carbonMessageProcessor.setClientConnector(httpClientConnector);
         HTTPTransportContextHolder.getInstance().setMessageProcessor(carbonMessageProcessor);
     }
